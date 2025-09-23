@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: resume-workflow-
+spec:
+  entrypoint: resume-resources
+  serviceAccountName: backup-sa
+  arguments:
+    parameters:
+      - name: resources
+        value: |
+          [
+            {"name": "deployment/autoquiz-pub", "replica": 3},
+            {"name": "deployment/autoquiz-quiz", "replica": 3},
+            {"name": "statefulset/autoquiz-mysql", "replica": 1}
+          ]
+  workflowTemplateRef:
+    name: resume-workflow-template

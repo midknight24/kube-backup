@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  generateName: backup-workflow-full-
+spec:
+  entrypoint: backup-resources
+  serviceAccountName: backup-sa
+  volumes:
+    - name: backup-dest
+      persistentVolumeClaim:
+        claimName: autoquiz-backup-pvc
+    - name: backup-source
+      persistentVolumeClaim:
+        claimName: autoquiz-mysql-pvc
+  templates:
+    - name: backup-resources
+      steps:
+        - - name: backup-each-resource
+            template: backup-resource
+    - name: backup-resource
+      script:
+        image: midknight24/restic
+        command: ["bash"]
+        volumeMounts:
+          - name: backup-dest
+            mountPath: /autoquiz-mysql-pvc/backup
+            subPath: autoquiz-mysql-pvc
+          - name: backup-source
+            mountPath: /source/autoquiz-mysql-pvc
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=/autoquiz-mysql-pvc/backup
+          export RESTIC_PASSWORD=abcd1234
+          restic init || true
+          restic backup /source/autoquiz-mysql-pvc
+          restic snapshots
+          restic forget --keep-last 3 --prune
+          

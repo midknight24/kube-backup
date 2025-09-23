@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: pause-workflow-template
+spec:
+  entrypoint: pause-resources
+  arguments:
+    parameters:
+      - name: resources
+  templates:
+    - name: pause-resources
+      steps:
+        - - name: pause-each-resource
+            template: pause-resource
+            arguments:
+              parameters:
+                - name: resource
+                  value: "{{item.name}}"
+            withParam: "{{workflow.parameters.resources}}"
+    - name: pause-resource
+      inputs:
+        parameters:
+          - name: resource
+          - name: timeout
+            value: "60s"
+      script:
+        image: midknight24/kubectl:v1.34.1
+        command: ["bash"]
+        source: |
+          #!/bin/sh
+
+          set -e
+
+          selector=$(kubectl get {{inputs.parameters.resource}} -o=jsonpath='{.spec.selector.matchLabels}' | tr -d '"{|}' | tr ':' '=')
+          echo "label selector for all pods: $selector"
+
+          function wait_for_pod_delete() {
+              echo "waiting for pod $1 deletion"
+              kubectl wait --for=delete pods/"$1" --timeout={{inputs.parameters.timeout}}
+              if [ $? -ne 0 ]; then
+                echo "ERROR: timeout waiting for $1 to be deleted. Exiting..."
+                exit 1
+              fi
+              echo "pod $1 deleted"
+          }
+
+          function get_running_pods() {
+              rm -rf /tmp/podnames
+              touch /tmp/podnames
+              kubectl get pods -l "$1" -o custom-columns=NAME:.metadata.name | sed '1d' | while read line; do echo "$line" >> /tmp/podnames; done
+              cat /tmp/podnames
+          }
+
+
+          function pause_resource() {
+            kubectl scale --replicas=0 {{inputs.parameters.resource}}
+          }
+
+          get_running_pods "$selector"
+          pause_resource
+          while read podname; do
+              wait_for_pod_delete $podname
+          done < /tmp/podnames
+
+          exit 0

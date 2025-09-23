@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: resume-workflow-template
+spec:
+  entrypoint: resume-resources
+  arguments:
+    parameters:
+      - name: resources
+  templates:
+    - name: resume-resources
+      steps:
+        - - name: resume-each-resource
+            template: resume-resource
+            arguments:
+              parameters:
+                - name: resource
+                  value: "{{item.name}}"
+                - name: replica
+                  value: "{{item.replica}}"
+            withParam: "{{workflow.parameters.resources}}"
+    - name: resume-resource
+      inputs:
+        parameters:
+          - name: resource
+          - name: replica
+      script:
+        image: midknight24/kubectl:v1.34.1
+        command: ["bash"]
+        source: |
+          #!/bin/sh
+          set -e
+          kubectl scale --replicas={{inputs.parameters.replica}} {{inputs.parameters.resource}}
