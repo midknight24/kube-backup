@@ -1,18 +1,36 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
-  generateName: resume-workflow-
+  name: resume-workflow-template 
 spec:
   entrypoint: resume-resources
-  serviceAccountName: backup-sa
   arguments:
     parameters:
       - name: resources
-        value: |
-          [
-            {"name": "deployment/autoquiz-pub", "replica": 3},
-            {"name": "deployment/autoquiz-quiz", "replica": 3},
-            {"name": "statefulset/autoquiz-mysql", "replica": 1}
-          ]
-  workflowTemplateRef:
-    name: resume-workflow-template
+  templates:
+    - name: resume-resources
+      inputs:
+        parameters:
+          - name: resources
+      steps:
+        - - name: resume-each-resource
+            template: resume-resource
+            arguments:
+              parameters:
+                - name: resource
+                  value: "{{item.name}}"
+                - name: replica
+                  value: "{{item.replica}}"
+            withParam: "{{inputs.parameters.resources}}"
+    - name: resume-resource
+      inputs:
+        parameters:
+          - name: resource
+          - name: replica
+      script:
+        image: midknight24/kubectl:v1.34.1
+        command: ["bash"]
+        source: |
+          #!/bin/sh
+          set -e
+          kubectl scale --replicas={{inputs.parameters.replica}} {{inputs.parameters.resource}}

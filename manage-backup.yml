@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: autoquiz-manager-backup-workflow-
+spec:
+  serviceAccountName: backup-sa
+  entrypoint: backup
+  templates:
+  - name: backup
+    steps:                              
+      - - name: pause-resources
+          templateRef:                  
+            name: pause-workflow-template 
+            template: pause-resources
+          arguments:
+            parameters:
+              - name: resources
+                value: |
+                  [
+                    {"name": "deployment/autoquiz-pub"},
+                    {"name": "deployment/autoquiz-quiz"},
+                    {"name": "statefulset/autoquiz-mysql"}
+                  ]
+      - - name: backup-resources
+          templateRef:                  
+            name: backup-workflow-template
+            template: backup-resources
+      - - name: resume-resources
+          templateRef:                  
+            name: resume-workflow-template
+            template: resume-resources
+          arguments:
+            parameters:
+              - name: resources
+                value: |
+                  [
+                    {"name": "deployment/autoquiz-pub", "replica": 3},
+                    {"name": "deployment/autoquiz-quiz", "replica": 3},
+                    {"name": "statefulset/autoquiz-mysql", "replica": 1}
+                  ]

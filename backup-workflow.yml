@@ -1,10 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  generateName: backup-workflow-full-
+  name: backup-workflow-template 
 spec:
   entrypoint: backup-resources
-  serviceAccountName: backup-sa
   volumes:
     - name: backup-dest
       persistentVolumeClaim:
