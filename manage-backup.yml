@@ -5,6 +5,13 @@ metadata:
 spec:
   serviceAccountName: backup-sa
   entrypoint: backup
+  volumes:
+    - name: backup-dest
+      persistentVolumeClaim:
+        claimName: autoquiz-backup-pvc
+    - name: backup-source
+      persistentVolumeClaim:
+        claimName: autoquiz-mysql-pvc
   templates:
   - name: backup
     steps:                              

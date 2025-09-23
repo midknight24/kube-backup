@@ -37,6 +37,11 @@ spec:
           selector=$(kubectl get {{inputs.parameters.resource}} -o=jsonpath='{.spec.selector.matchLabels}' | tr -d '"{|}' | tr ':' '=')
           echo "label selector for all pods: $selector"
 
+          if [ -z "$selector" ]; then
+            echo "empty selector"
+            exit 1
+          fi
+
           function wait_for_pod_delete() {
               echo "waiting for pod $1 deletion"
               kubectl wait --for=delete pods/"$1" --timeout={{inputs.parameters.timeout}}
