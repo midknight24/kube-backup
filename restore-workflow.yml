@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: autoquiz-resume-workflow-
+spec:
+  serviceAccountName: backup-sa
+  entrypoint: backup
+  templates:
+  - name: backup
+    steps:                              
+      - - name: restore-resources
+          templateRef:
+            name: restore-workflow-template
+            template: restore-resources
+          arguments:
+            parameters:
+              - name: snapshot-id
+                value: "your-snapshot-id" # Replace with the actual snapshot ID
