@@ -4,13 +4,6 @@ metadata:
   name: backup-workflow-template 
 spec:
   entrypoint: backup-resources
-  volumes:
-    - name: backup-dest
-      persistentVolumeClaim:
-        claimName: autoquiz-backup-pvc
-    - name: backup-source
-      persistentVolumeClaim:
-        claimName: autoquiz-mysql-pvc
   templates:
     - name: backup-resources
       steps:
