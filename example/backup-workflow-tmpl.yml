@@ -6,10 +6,20 @@ spec:
   entrypoint: backup-resource
   templates:
     - name: backup-resource
+      inputs:
+        parameters:
+          - name: backup-id
       steps:
         - - name: backup-each-resource
             template: backup-resource
+            arguments:
+              parameters:
+                - name: backup-id
+                  value: "{{inputs.parameters.backup-id}}"
     - name: backup-resource
+      inputs:
+        parameters:
+          - name: backup-id
       script:
         image: midknight24/restic
         command: ["bash"]
@@ -25,7 +35,43 @@ spec:
           export RESTIC_REPOSITORY=/autoquiz-mysql-pvc/backup
           export RESTIC_PASSWORD=abcd1234
           restic init || true
-          restic backup --host autoquiz-mysql /source/autoquiz-mysql-pvc
+          restic backup --host autoquiz-mysql-pvc --tag {{inputs.parameters.backup-id}} /source/autoquiz-mysql-pvc
+          restic snapshots
+          restic forget --keep-last 3 --prune
+
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: backup-autoquiz-test-pvc-workflow-template 
+spec:
+  entrypoint: backup-resource
+  templates:
+    - name: backup-resource
+      inputs:
+        parameters:
+          - name: backup-id
+      steps:
+        - - name: backup-each-resource
+            template: backup-resource
+    - name: backup-resource
+      script:
+        image: midknight24/restic
+        command: ["bash"]
+        volumeMounts:
+          - name: backup-dest
+            mountPath: /autoquiz-test-pvc/backup
+            subPath: autoquiz-test-pvc
+          - name: backup-source
+            mountPath: /source/autoquiz-test-pvc
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=/autoquiz-test-pvc/backup
+          export RESTIC_PASSWORD=abcd1234
+          restic init || true
+          restic backup --host autoquiz-test-pvc --tag {{inputs.parameters.backup-id}} /source/autoquiz-test-pvc
           restic snapshots
           restic forget --keep-last 3 --prune
           

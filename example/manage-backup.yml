@@ -32,6 +32,18 @@ spec:
           templateRef:                  
             name: backup-autoquiz-mysql-pvc-workflow-template
             template: backup-resource
+          arguments:
+            parameters:
+              - name: backup-id
+                value: "{{workflow.creationTimestamp}}"
+        - name: backup-autoquiz-test-pvc
+          templateRef:                  
+            name: backup-autoquiz-test-pvc-workflow-template
+            template: backup-resource
+          arguments:
+            parameters:
+              - name: backup-id
+                value: "{{workflow.creationTimestamp}}"
       - - name: resume-resources
           templateRef:                  
             name: resume-workflow-template
