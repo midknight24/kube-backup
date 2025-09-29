@@ -1,18 +1,53 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: autoquiz-resume-workflow-
+  generateName: autoquiz-manager-restore-workflow-
 spec:
   serviceAccountName: backup-sa
-  entrypoint: backup
+  entrypoint: restore
+  volumes:
+    - name: backup-repo
+      persistentVolumeClaim:
+        claimName: autoquiz-backup-pvc
+    - name: restore-location
+      persistentVolumeClaim:
+        claimName: autoquiz-mysql-pvc
   templates:
-  - name: backup
+  - name: restore
     steps:                              
+      - - name: pause-resources
+          templateRef:                  
+            name: pause-workflow-template 
+            template: pause-resources
+          arguments:
+            parameters:
+              - name: resources
+                value: |
+                  [
+                    {"name": "deployment/autoquiz-pub"},
+                    {"name": "deployment/autoquiz-quiz"},
+                    {"name": "deployment/autoquiz-user"},
+                    {"name": "statefulset/autoquiz-mysql"}
+                  ]
       - - name: restore-resources
-          templateRef:
+          templateRef:                  
             name: restore-workflow-template
             template: restore-resources
           arguments:
             parameters:
               - name: snapshot-id
-                value: "your-snapshot-id" # Replace with the actual snapshot ID
+                value: 79226c0c
+      - - name: resume-resources
+          templateRef:                  
+            name: resume-workflow-template
+            template: resume-resources
+          arguments:
+            parameters:
+              - name: resources
+                value: |
+                  [
+                    {"name": "deployment/autoquiz-pub", "replica": 3},
+                    {"name": "deployment/autoquiz-quiz", "replica": 3},
+                    {"name": "deployment/autoquiz-user", "replica": 1},
+                    {"name": "statefulset/autoquiz-mysql", "replica": 1}
+                  ]
