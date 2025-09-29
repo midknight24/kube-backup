@@ -1,0 +1,34 @@
+#@ load("@ytt:data", "data")
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: backup-workflow-template 
+spec:
+  entrypoint: backup-resources
+  templates:
+    - name: backup-resources
+      steps:
+        - - name: backup-each-resource
+            template: backup-resource
+    - name: backup-resource
+      script:
+        image: #@ data.values.restic-image
+        command: ["bash"]
+        volumeMounts:
+          #@ for pvc in data.values.backupPvcs:
+          - name: #@ f"{pvc}-backup-dest"
+            mountPath: #@ f"/{pvc}/backup"
+            subPath: #@ pvc
+          - name: #@ f"{pvc}-backup-source"
+            mountPath: #@ f"/source/{pvc}"
+          #@ end
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=#@ 
+          export RESTIC_PASSWORD=abcd1234
+          restic init || true
+          restic backup --host autoquiz-mysql /source/autoquiz-mysql-pvc
+          restic snapshots
+          restic forget --keep-last 3 --prune
+          

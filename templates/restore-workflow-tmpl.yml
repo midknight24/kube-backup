@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: restore-workflow-template 
+spec:
+  entrypoint: restore-resources
+  templates:
+    - name: restore-resources
+      inputs:
+        parameters:
+          - name: snapshot-id
+      steps:
+        - - name: restore-each-resource
+            template: restore-resource
+            arguments:
+              parameters:
+                - name: snapshot-id
+                  value: "{{inputs.parameters.snapshot-id}}"
+    - name: restore-resource
+      inputs:
+        parameters:
+          - name: snapshot-id
+      script:
+        image: midknight24/restic
+        command: ["bash"]
+        volumeMounts:
+          - name: backup-repo
+            mountPath: /autoquiz-mysql-pvc/backup
+            subPath: autoquiz-mysql-pvc
+          - name: restore-location
+            mountPath: /source/autoquiz-mysql-pvc
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=/autoquiz-mysql-pvc/backup
+          export RESTIC_PASSWORD=abcd1234
+          rm -rf /source/autoquiz-mysql-pvc/*
+          # restic默认会恢复备份的完整路劲, 所以这里指定恢复到根目录
+          restic restore --target / {{inputs.parameters.snapshot-id}}
+          

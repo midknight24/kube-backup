@@ -1,0 +1,5 @@
+#@data/values
+resticImage: midknight24/restic
+
+backupPvcs:
+- autoquiz-mysql-pvc
