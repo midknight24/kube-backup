@@ -4,9 +4,6 @@ metadata:
   name: resume-workflow-template 
 spec:
   entrypoint: resume-resources
-  arguments:
-    parameters:
-      - name: resources
   templates:
     - name: resume-resources
       inputs:

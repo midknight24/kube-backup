@@ -4,9 +4,6 @@ metadata:
   name: pause-workflow-template 
 spec:
   entrypoint: pause-resources
-  arguments:
-    parameters:
-      - name: resources
   templates:
     - name: pause-resources
       inputs:
