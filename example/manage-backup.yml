@@ -9,9 +9,12 @@ spec:
     - name: backup-dest
       persistentVolumeClaim:
         claimName: autoquiz-backup-pvc
-    - name: backup-source
+    - name: autoquiz-mysql-pvc-source
       persistentVolumeClaim:
         claimName: autoquiz-mysql-pvc
+    - name: autoquiz-test-pvc-source
+      persistentVolumeClaim:
+        claimName: autoquiz-test-pvc
   templates:
   - name: backup
     steps:                              

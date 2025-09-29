@@ -35,7 +35,7 @@ spec:
             template: restore-resources
           arguments:
             parameters:
-              - name: snapshot-id
+              - name: backup-id
                 value: 79226c0c
       - - name: resume-resources
           templateRef:                  

@@ -9,17 +9,6 @@ spec:
       inputs:
         parameters:
           - name: backup-id
-      steps:
-        - - name: backup-each-resource
-            template: backup-resource
-            arguments:
-              parameters:
-                - name: backup-id
-                  value: "{{inputs.parameters.backup-id}}"
-    - name: backup-resource
-      inputs:
-        parameters:
-          - name: backup-id
       script:
         image: midknight24/restic
         command: ["bash"]
@@ -27,7 +16,7 @@ spec:
           - name: backup-dest
             mountPath: /autoquiz-mysql-pvc/backup
             subPath: autoquiz-mysql-pvc
-          - name: backup-source
+          - name: autoquiz-mysql-pvc-source
             mountPath: /source/autoquiz-mysql-pvc
         source: |
           #!/bin/sh
@@ -52,10 +41,6 @@ spec:
       inputs:
         parameters:
           - name: backup-id
-      steps:
-        - - name: backup-each-resource
-            template: backup-resource
-    - name: backup-resource
       script:
         image: midknight24/restic
         command: ["bash"]
@@ -63,7 +48,7 @@ spec:
           - name: backup-dest
             mountPath: /autoquiz-test-pvc/backup
             subPath: autoquiz-test-pvc
-          - name: backup-source
+          - name: autoquiz-test-pvc-source
             mountPath: /source/autoquiz-test-pvc
         source: |
           #!/bin/sh

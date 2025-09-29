@@ -8,18 +8,18 @@ spec:
     - name: restore-resources
       inputs:
         parameters:
-          - name: snapshot-id
+          - name: backup-id
       steps:
         - - name: restore-each-resource
             template: restore-resource
             arguments:
               parameters:
-                - name: snapshot-id
-                  value: "{{inputs.parameters.snapshot-id}}"
+                - name: backup-id
+                  value: "{{inputs.parameters.backup-id}}"
     - name: restore-resource
       inputs:
         parameters:
-          - name: snapshot-id
+          - name: backup-id
       script:
         image: midknight24/restic
         command: ["bash"]
@@ -36,5 +36,5 @@ spec:
           export RESTIC_PASSWORD=abcd1234
           rm -rf /source/autoquiz-mysql-pvc/*
           # restic默认会恢复备份的完整路劲, 所以这里指定恢复到根目录
-          restic restore --target / {{inputs.parameters.snapshot-id}}
+          restic restore --target / {{inputs.parameters.backup-id}}
           
