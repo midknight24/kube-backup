@@ -1,0 +1,2 @@
+使用这个命令来清楚workflow完成的pod：
+kubectl -n <namespace> delete pods -l workflows.argoproj.io/completed=true
