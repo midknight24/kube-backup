@@ -9,9 +9,16 @@ spec:
     - name: backup-repo
       persistentVolumeClaim:
         claimName: autoquiz-backup-pvc
-    - name: restore-location
+    - name: autoquiz-mysql-pvc-source
       persistentVolumeClaim:
         claimName: autoquiz-mysql-pvc
+    - name: autoquiz-test-pvc-source
+      persistentVolumeClaim:
+        claimName: autoquiz-test-pvc
+  arguments:
+    parameters:
+      - name: backup-id
+        value: 2025-09-30T01:40:50Z
   templates:
   - name: restore
     steps:                              
@@ -36,7 +43,7 @@ spec:
           arguments:
             parameters:
               - name: backup-id
-                value: 2025-09-29T14:13:25Z
+                value: '{{workflow.parameters.backup-id}}'
         - name: restore-autoquiz-test-pvc
           templateRef:
             name: restore-autoquiz-test-pvc-workflow-template
@@ -44,7 +51,7 @@ spec:
           arguments:
             parameters:
               - name: backup-id
-                value: 2025-09-29T14:07:06Z 
+                value: '{{workflow.parameters.backup-id}}'
       - - name: resume-resources
           templateRef:                  
             name: resume-workflow-template

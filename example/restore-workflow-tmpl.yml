@@ -16,7 +16,7 @@ spec:
           - name: backup-repo
             mountPath: /autoquiz-mysql-pvc/backup
             subPath: autoquiz-mysql-pvc
-          - name: restore-location
+          - name: autoquiz-mysql-pvc-source
             mountPath: /source/autoquiz-mysql-pvc
         source: |
           #!/bin/sh
@@ -48,7 +48,7 @@ spec:
           - name: backup-repo
             mountPath: /autoquiz-test-pvc/backup
             subPath: autoquiz-test-pvc
-          - name: restore-location
+          - name: autoquiz-test-pvc-source
             mountPath: /source/autoquiz-test-pvc
         source: |
           #!/bin/sh

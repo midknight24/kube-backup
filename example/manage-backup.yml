@@ -6,7 +6,7 @@ spec:
   serviceAccountName: backup-sa
   entrypoint: backup
   volumes:
-    - name: backup-dest
+    - name: backup-repo
       persistentVolumeClaim:
         claimName: autoquiz-backup-pvc
     - name: autoquiz-mysql-pvc-source

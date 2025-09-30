@@ -13,7 +13,7 @@ spec:
         image: midknight24/restic
         command: ["bash"]
         volumeMounts:
-          - name: backup-dest
+          - name: backup-repo
             mountPath: /autoquiz-mysql-pvc/backup
             subPath: autoquiz-mysql-pvc
           - name: autoquiz-mysql-pvc-source
@@ -45,7 +45,7 @@ spec:
         image: midknight24/restic
         command: ["bash"]
         volumeMounts:
-          - name: backup-dest
+          - name: backup-repo
             mountPath: /autoquiz-test-pvc/backup
             subPath: autoquiz-test-pvc
           - name: autoquiz-test-pvc-source
