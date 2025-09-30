@@ -1,0 +1,33 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:json", "json")
+#@yaml/text-templated-strings
+
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  namespace: (@= data.values.namespace @)
+  generateName: (@= data.values.appName @)-showsnapshots-workflow-
+spec:
+  serviceAccountName: backup-sa
+  entrypoint: showsnapshots
+  volumes:
+    - name: backup-repo
+      persistentVolumeClaim:
+        claimName: (@= data.values.repoPvc.name @)
+  templates:
+  - name: showsnapshots
+    steps:                              
+      - - name: showsnapshots-(@= data.values.backupPvcs[0].name @)
+          templateRef:                  
+            name: showsnapshots-(@= data.values.backupPvcs[0].name @)-workflow-template
+            template: showsnapshots
+
+        #@ for pvc in data.values.backupPvcs[1:]:
+        - name: showsnapshots-(@= pvc.name @)
+          templateRef:                  
+            name: showsnapshots-(@= pvc.name @)-workflow-template
+            template: showsnapshots
+        #@ end
+

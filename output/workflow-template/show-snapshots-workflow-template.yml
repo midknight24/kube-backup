@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: showsnapshots-autoquiz-mysql-pvc-workflow-template
+  namespace: autoquiz
+spec:
+  entrypoint: showsnapshots
+  templates:
+  - name: showsnapshots
+    script:
+      image: midknight24/restic
+      command:
+      - bash
+      volumeMounts:
+      - name: backup-repo
+        mountPath: /autoquiz-mysql-pvc/backup
+        subPath: autoquiz-mysql-pvc
+      source: |
+        #!/bin/sh
+        set -e
+        export RESTIC_REPOSITORY=/autoquiz-mysql-pvc/backup
+        export RESTIC_PASSWORD=abcd1234
+        restic snapshots
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: showsnapshots-autoquiz-test-pvc-workflow-template
+  namespace: autoquiz
+spec:
+  entrypoint: showsnapshots
+  templates:
+  - name: showsnapshots
+    script:
+      image: midknight24/restic
+      command:
+      - bash
+      volumeMounts:
+      - name: backup-repo
+        mountPath: /autoquiz-test-pvc/backup
+        subPath: autoquiz-test-pvc
+      source: |
+        #!/bin/sh
+        set -e
+        export RESTIC_REPOSITORY=/autoquiz-test-pvc/backup
+        export RESTIC_PASSWORD=abcd1234
+        restic snapshots

@@ -1,20 +1,26 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:json", "json")
+#@yaml/text-templated-strings
+
+---
+
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: autoquiz-manage-backup-workflow-
+  generateName: (@= data.values.appName @)-manage-backup-workflow-
+  namespace: (@= data.values.namespace @)
 spec:
   serviceAccountName: backup-sa
   entrypoint: backup
   volumes:
     - name: backup-repo
       persistentVolumeClaim:
-        claimName: autoquiz-backup-pvc
-    - name: autoquiz-mysql-pvc-source
+        claimName: (@= data.values.repoPvc.name @)
+    #@ for pvc in data.values.backupPvcs:
+    - name: (@= pvc.name @)-source
       persistentVolumeClaim:
-        claimName: autoquiz-mysql-pvc
-    - name: autoquiz-test-pvc-source
-      persistentVolumeClaim:
-        claimName: autoquiz-test-pvc
+        claimName: (@= pvc.name @)
+    #@ end
   templates:
   - name: backup
     steps:                              
@@ -25,28 +31,25 @@ spec:
           arguments:
             parameters:
               - name: resources
-                value: |
-                  [
-                    {"name": "deployment/autoquiz-pub"},
-                    {"name": "deployment/autoquiz-quiz"},
-                    {"name": "statefulset/autoquiz-mysql"}
-                  ]
-      - - name: backup-autoquiz-mysql-pvc
+                value: #@ json.encode([{"name": r.name, "timeout": getattr(r, 'timeout', '60s') } for r in data.values.workloads])
+      - - name: backup-(@= data.values.backupPvcs[0].name @)
           templateRef:                  
-            name: backup-autoquiz-mysql-pvc-workflow-template
+            name: backup-(@= data.values.backupPvcs[0].name @)-workflow-template
             template: backup-resource
           arguments:
             parameters:
               - name: backup-id
                 value: "{{workflow.creationTimestamp}}"
-        - name: backup-autoquiz-test-pvc
+        #@ for pvc in data.values.backupPvcs[1:]:
+        - name: backup-(@= pvc.name @)
           templateRef:                  
-            name: backup-autoquiz-test-pvc-workflow-template
+            name: backup-(@= pvc.name @)-workflow-template
             template: backup-resource
           arguments:
             parameters:
               - name: backup-id
                 value: "{{workflow.creationTimestamp}}"
+        #@ end
       - - name: resume-resources
           templateRef:                  
             name: resume-workflow-template
@@ -54,9 +57,4 @@ spec:
           arguments:
             parameters:
               - name: resources
-                value: |
-                  [
-                    {"name": "deployment/autoquiz-pub", "replica": 3},
-                    {"name": "deployment/autoquiz-quiz", "replica": 3},
-                    {"name": "statefulset/autoquiz-mysql", "replica": 1}
-                  ]
+                value: #@ json.encode([{"name": r.name, "replica": r.replica} for r in data.values.workloads])

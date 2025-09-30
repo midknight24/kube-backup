@@ -1,11 +1,18 @@
+# 应用名
 appName: autoquiz
 
+# 应用所在命名空间
+namespace: autoquiz
+
+# 备份仓库 PVC 名称
 repoPvc:
   name: autoquiz-backup-pvc
 
+# 需要暂停和恢复的工作负载
 workloads:
   - name: deployment/autoquiz-pub
     replica: 3
+    timeout: 120s
   - name: deployment/autoquiz-quiz
     replica: 3
   - name: deployment/autoquiz-user
@@ -13,6 +20,7 @@ workloads:
   - name: statefulset/autoquiz-mysql
     replica: 1
 
+# 需要备份的 PVC 列表
 backupPvcs:
   - name: autoquiz-mysql-pvc
   - name: autoquiz-test-pvc

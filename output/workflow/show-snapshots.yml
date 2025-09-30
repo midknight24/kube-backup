@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  namespace: autoquiz
+  generateName: autoquiz-showsnapshots-workflow-
+spec:
+  serviceAccountName: backup-sa
+  entrypoint: showsnapshots
+  volumes:
+  - name: backup-repo
+    persistentVolumeClaim:
+      claimName: autoquiz-backup-pvc
+  templates:
+  - name: showsnapshots
+    steps:
+    - - name: showsnapshots-autoquiz-mysql-pvc
+        templateRef:
+          name: showsnapshots-autoquiz-mysql-pvc-workflow-template
+          template: showsnapshots
+      - name: showsnapshots-autoquiz-test-pvc
+        templateRef:
+          name: showsnapshots-autoquiz-test-pvc-workflow-template
+          template: showsnapshots

@@ -1,0 +1,39 @@
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+#@ for pvc in data.values.backupPvcs:
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: restore-(@= pvc.name @)-workflow-template
+spec:
+  entrypoint: restore-resource
+  templates:
+    - name: restore-resource
+      inputs:
+        parameters:
+          - name: backup-id
+      script:
+        image: midknight24/restic
+        command: ["bash"]
+        volumeMounts:
+          - name: backup-repo
+            mountPath: /(@= pvc.name @)/backup
+            subPath: (@= pvc.name @)
+          - name: (@= pvc.name @)-source
+            mountPath: /source/(@= pvc.name @)
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=/(@= pvc.name @)/backup
+          export RESTIC_PASSWORD=abcd1234
+          rm -rf /source/(@= pvc.name @)/*
+          # restic默认会恢复备份的完整路径，所以这里指定恢复到根目录
+          snapshot_id=$(restic snapshots --tag {{inputs.parameters.backup-id}} --json | jq -r '.[0].short_id')
+          restic restore --target / $snapshot_id
+
+#@ end
+---
+

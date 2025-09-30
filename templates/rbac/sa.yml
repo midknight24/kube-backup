@@ -1,0 +1,10 @@
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-sa
+  namespace: (@= data.values.namespace @)

@@ -1,8 +1,13 @@
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: backup-role
-  namespace: autoquiz
+  namespace: (@= data.values.namespace @)
 rules:
 - apiGroups:
     - ""

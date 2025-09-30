@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: autoquiz-manage-backup-workflow-
+  namespace: autoquiz
+spec:
+  serviceAccountName: backup-sa
+  entrypoint: backup
+  volumes:
+  - name: backup-repo
+    persistentVolumeClaim:
+      claimName: autoquiz-backup-pvc
+  - name: autoquiz-mysql-pvc-source
+    persistentVolumeClaim:
+      claimName: autoquiz-mysql-pvc
+  - name: autoquiz-test-pvc-source
+    persistentVolumeClaim:
+      claimName: autoquiz-test-pvc
+  templates:
+  - name: backup
+    steps:
+    - - name: pause-resources
+        templateRef:
+          name: pause-workflow-template
+          template: pause-resources
+        arguments:
+          parameters:
+          - name: resources
+            value: '[{"name":"deployment/autoquiz-pub","timeout":"120s"},{"name":"deployment/autoquiz-quiz","timeout":"60s"},{"name":"deployment/autoquiz-user","timeout":"60s"},{"name":"statefulset/autoquiz-mysql","timeout":"60s"}]'
+    - - name: backup-autoquiz-mysql-pvc
+        templateRef:
+          name: backup-autoquiz-mysql-pvc-workflow-template
+          template: backup-resource
+        arguments:
+          parameters:
+          - name: backup-id
+            value: '{{workflow.creationTimestamp}}'
+      - name: backup-autoquiz-test-pvc
+        templateRef:
+          name: backup-autoquiz-test-pvc-workflow-template
+          template: backup-resource
+        arguments:
+          parameters:
+          - name: backup-id
+            value: '{{workflow.creationTimestamp}}'
+    - - name: resume-resources
+        templateRef:
+          name: resume-workflow-template
+          template: resume-resources
+        arguments:
+          parameters:
+          - name: resources
+            value: '[{"name":"deployment/autoquiz-pub","replica":3},{"name":"deployment/autoquiz-quiz","replica":3},{"name":"deployment/autoquiz-user","replica":1},{"name":"statefulset/autoquiz-mysql","replica":1}]'

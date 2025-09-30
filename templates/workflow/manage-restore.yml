@@ -8,23 +8,23 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: (@= data.values.appName @)-manage-restore-workflow-
+  namespace: (@= data.values.namespace @)
 spec:
   serviceAccountName: backup-sa
   entrypoint: restore
   volumes:
     - name: backup-repo
       persistentVolumeClaim:
-        claimName: autoquiz-backup-pvc
-    - name: autoquiz-mysql-pvc-source
+        claimName: (@= data.values.repoPvc.name @)
+    #@ for pvc in data.values.backupPvcs:
+    - name: (@= pvc.name @)-source
       persistentVolumeClaim:
-        claimName: autoquiz-mysql-pvc
-    - name: autoquiz-test-pvc-source
-      persistentVolumeClaim:
-        claimName: autoquiz-test-pvc
+        claimName: (@= pvc.name @)
+    #@ end
   arguments:
     parameters:
       - name: backup-id
-        value: 2025-09-30T01:40:50Z
+        value: xxx # 这里填写需要恢复的备份ID，可以通过 showsnapshots 工作流查看 
   templates:
   - name: restore
     steps:                              
@@ -35,29 +35,25 @@ spec:
           arguments:
             parameters:
               - name: resources
-                value: |
-                  [
-                    {"name": "deployment/autoquiz-pub"},
-                    {"name": "deployment/autoquiz-quiz"},
-                    {"name": "deployment/autoquiz-user"},
-                    {"name": "statefulset/autoquiz-mysql"}
-                  ]
-      - - name: restore-autoquiz-mysql-pvc
+                value: #@ json.encode([{"name": r.name, "timeout": getattr(r, 'timeout', '60s')} for r in data.values.workloads])
+      - - name: restore-(@= data.values.backupPvcs[0].name @)
           templateRef:                  
-            name: restore-autoquiz-mysql-pvc-workflow-template
+            name: restore-(@= data.values.backupPvcs[0].name @)-workflow-template
             template: restore-resource
           arguments:
             parameters:
               - name: backup-id
                 value: '{{workflow.parameters.backup-id}}'
-        - name: restore-autoquiz-test-pvc
+        #@ for pvc in data.values.backupPvcs[1:]:
+        - name: restore-(@= pvc.name @)
           templateRef:
-            name: restore-autoquiz-test-pvc-workflow-template
+            name: restore-(@= pvc.name @)-workflow-template
             template: restore-resource
           arguments:
             parameters:
               - name: backup-id
                 value: '{{workflow.parameters.backup-id}}'
+        #@ end
       - - name: resume-resources
           templateRef:                  
             name: resume-workflow-template
@@ -65,10 +61,4 @@ spec:
           arguments:
             parameters:
               - name: resources
-                value: |
-                  [
-                    {"name": "deployment/autoquiz-pub", "replica": 3},
-                    {"name": "deployment/autoquiz-quiz", "replica": 3},
-                    {"name": "deployment/autoquiz-user", "replica": 1},
-                    {"name": "statefulset/autoquiz-mysql", "replica": 1}
-                  ]
+                value: #@ json.encode([{"name": r.name, "replica": r.replica} for r in data.values.workloads])

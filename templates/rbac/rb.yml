@@ -1,13 +1,17 @@
-# rolebinding.yaml
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+---
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: backup-rolebinding
-  namespace: autoquiz
+  namespace: (@= data.values.namespace @)
 subjects:
 - kind: ServiceAccount
   name: backup-sa
-  namespace: autoquiz
+  namespace: (@= data.values.namespace @)
 roleRef:
   kind: Role
   name: backup-role

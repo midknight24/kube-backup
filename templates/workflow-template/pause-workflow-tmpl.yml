@@ -1,7 +1,13 @@
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+---
+
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: pause-workflow-template 
+  name: pause-workflow-template
+  namespace: (@= data.values.namespace @)
 spec:
   entrypoint: pause-resources
   templates:
@@ -16,13 +22,14 @@ spec:
               parameters:
                 - name: resource
                   value: "{{item.name}}"
+                - name: timeout
+                  value: "{{item.timeout | default('60s')}}"
             withParam: "{{inputs.parameters.resources}}"
     - name: pause-resource
       inputs:
         parameters:
           - name: resource
           - name: timeout
-            value: "60s"
       script:
         image: midknight24/kubectl:v1.34.1
         command: ["bash"]

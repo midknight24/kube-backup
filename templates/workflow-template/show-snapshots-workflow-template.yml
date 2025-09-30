@@ -1,0 +1,29 @@
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+#@ for pvc in data.values.backupPvcs:
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: showsnapshots-(@= pvc.name @)-workflow-template
+  namespace: (@= data.values.namespace @)
+spec:
+  entrypoint: showsnapshots
+  templates:
+    - name: showsnapshots
+      script:
+        image: midknight24/restic
+        command: ["bash"]
+        volumeMounts:
+          - name: backup-repo
+            mountPath: /(@= pvc.name @)/backup
+            subPath: (@= pvc.name @)
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=/(@= pvc.name @)/backup
+          export RESTIC_PASSWORD=abcd1234
+          restic snapshots
+          
+#@ end
