@@ -1,0 +1,18 @@
+appName: autoquiz
+
+repoPvc:
+  name: autoquiz-backup-pvc
+
+workloads:
+  - name: deployment/autoquiz-pub
+    replica: 3
+  - name: deployment/autoquiz-quiz
+    replica: 3
+  - name: deployment/autoquiz-user
+    replica: 1
+  - name: statefulset/autoquiz-mysql
+    replica: 1
+
+backupPvcs:
+  - name: autoquiz-mysql-pvc
+  - name: autoquiz-test-pvc

@@ -1,7 +1,13 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:json", "json")
+#@yaml/text-templated-strings
+
+---
+
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: autoquiz-manager-restore-workflow-
+  generateName: (@= data.values.appName @)-manage-restore-workflow-
 spec:
   serviceAccountName: backup-sa
   entrypoint: restore
@@ -9,9 +15,16 @@ spec:
     - name: backup-repo
       persistentVolumeClaim:
         claimName: autoquiz-backup-pvc
-    - name: restore-location
+    - name: autoquiz-mysql-pvc-source
       persistentVolumeClaim:
         claimName: autoquiz-mysql-pvc
+    - name: autoquiz-test-pvc-source
+      persistentVolumeClaim:
+        claimName: autoquiz-test-pvc
+  arguments:
+    parameters:
+      - name: backup-id
+        value: 2025-09-30T01:40:50Z
   templates:
   - name: restore
     steps:                              
@@ -29,14 +42,22 @@ spec:
                     {"name": "deployment/autoquiz-user"},
                     {"name": "statefulset/autoquiz-mysql"}
                   ]
-      - - name: restore-resources
+      - - name: restore-autoquiz-mysql-pvc
           templateRef:                  
-            name: restore-workflow-template
-            template: restore-resources
+            name: restore-autoquiz-mysql-pvc-workflow-template
+            template: restore-resource
           arguments:
             parameters:
               - name: backup-id
-                value: 79226c0c
+                value: '{{workflow.parameters.backup-id}}'
+        - name: restore-autoquiz-test-pvc
+          templateRef:
+            name: restore-autoquiz-test-pvc-workflow-template
+            template: restore-resource
+          arguments:
+            parameters:
+              - name: backup-id
+                value: '{{workflow.parameters.backup-id}}'
       - - name: resume-resources
           templateRef:                  
             name: resume-workflow-template

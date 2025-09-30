@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: autoquiz-manager-backup-workflow-
+  generateName: autoquiz-manage-backup-workflow-
 spec:
   serviceAccountName: backup-sa
   entrypoint: backup

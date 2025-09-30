@@ -1,21 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: restore-workflow-template 
+  name: restore-autoquiz-mysql-pvc-workflow-template
 spec:
-  entrypoint: restore-resources
+  entrypoint: restore-resource
   templates:
-    - name: restore-resources
-      inputs:
-        parameters:
-          - name: backup-id
-      steps:
-        - - name: restore-each-resource
-            template: restore-resource
-            arguments:
-              parameters:
-                - name: backup-id
-                  value: "{{inputs.parameters.backup-id}}"
     - name: restore-resource
       inputs:
         parameters:
@@ -27,7 +16,7 @@ spec:
           - name: backup-repo
             mountPath: /autoquiz-mysql-pvc/backup
             subPath: autoquiz-mysql-pvc
-          - name: restore-location
+          - name: autoquiz-mysql-pvc-source
             mountPath: /source/autoquiz-mysql-pvc
         source: |
           #!/bin/sh
@@ -35,6 +24,38 @@ spec:
           export RESTIC_REPOSITORY=/autoquiz-mysql-pvc/backup
           export RESTIC_PASSWORD=abcd1234
           rm -rf /source/autoquiz-mysql-pvc/*
-          # restic默认会恢复备份的完整路劲, 所以这里指定恢复到根目录
-          restic restore --target / {{inputs.parameters.backup-id}}
-          
+          # restic默认会恢复备份的完整路径，所以这里指定恢复到根目录
+          snapshot_id=$(restic snapshots --tag {{inputs.parameters.backup-id}} --json | jq -r '.[0].short_id')
+          restic restore --target / $snapshot_id
+
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: restore-autoquiz-test-pvc-workflow-template
+spec:
+  entrypoint: restore-resource
+  templates:
+    - name: restore-resource
+      inputs:
+        parameters:
+          - name: backup-id
+      script:
+        image: midknight24/restic
+        command: ["bash"]
+        volumeMounts:
+          - name: backup-repo
+            mountPath: /autoquiz-test-pvc/backup
+            subPath: autoquiz-test-pvc
+          - name: autoquiz-test-pvc-source
+            mountPath: /source/autoquiz-test-pvc
+        source: |
+          #!/bin/sh
+          set -e
+          export RESTIC_REPOSITORY=/autoquiz-test-pvc/backup
+          export RESTIC_PASSWORD=abcd1234
+          rm -rf /source/autoquiz-test-pvc/*
+          # restic默认会恢复备份的完整路径，所以这里指定恢复到根目录
+          snapshot_id=$(restic snapshots --tag {{inputs.parameters.backup-id}} --json | jq -r '.[0].short_id')
+          restic restore --target / $snapshot_id

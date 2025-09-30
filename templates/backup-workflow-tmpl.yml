@@ -1,34 +1,37 @@
 #@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+#@ for pvc in data.values.backupPvcs:
+---
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: backup-workflow-template 
+  name: backup-(@= pvc.name @)-workflow-template 
 spec:
-  entrypoint: backup-resources
+  entrypoint: backup-resource
   templates:
-    - name: backup-resources
-      steps:
-        - - name: backup-each-resource
-            template: backup-resource
     - name: backup-resource
+      inputs:
+        parameters:
+          - name: backup-id
       script:
-        image: #@ data.values.restic-image
+        image: midknight24/restic
         command: ["bash"]
         volumeMounts:
-          #@ for pvc in data.values.backupPvcs:
-          - name: #@ f"{pvc}-backup-dest"
-            mountPath: #@ f"/{pvc}/backup"
-            subPath: #@ pvc
-          - name: #@ f"{pvc}-backup-source"
-            mountPath: #@ f"/source/{pvc}"
-          #@ end
+          - name: backup-repo
+            mountPath: /(@= pvc.name @)/backup
+            subPath: (@= pvc.name @)
+          - name: (@= pvc.name @)-source
+            mountPath: /source/(@= pvc.name @)
         source: |
           #!/bin/sh
           set -e
-          export RESTIC_REPOSITORY=#@ 
+          export RESTIC_REPOSITORY=/(@= pvc.name @)/backup
           export RESTIC_PASSWORD=abcd1234
           restic init || true
-          restic backup --host autoquiz-mysql /source/autoquiz-mysql-pvc
+          restic backup --host (@= pvc.name @) --tag {{inputs.parameters.backup-id}} /source/(@= pvc.name @)
           restic snapshots
           restic forget --keep-last 3 --prune
+#@ end
+---
           
