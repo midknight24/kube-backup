@@ -6,6 +6,9 @@ metadata:
 spec:
   serviceAccountName: backup-sa
   entrypoint: restore
+  podGC:
+    strategy: OnWorkflowSuccess
+    deleteDelayDuration: 3600s
   volumes:
   - name: backup-repo
     persistentVolumeClaim:
@@ -19,7 +22,7 @@ spec:
   arguments:
     parameters:
     - name: backup-id
-      value: "2025-09-30T01:40:50Z"
+      value: xxx
   templates:
   - name: restore
     steps:

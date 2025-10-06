@@ -12,6 +12,9 @@ metadata:
 spec:
   serviceAccountName: backup-sa
   entrypoint: restore
+  podGC:
+    strategy: OnWorkflowSuccess
+    deleteDelayDuration: 3600s
   volumes:
     - name: backup-repo
       persistentVolumeClaim:
@@ -24,7 +27,7 @@ spec:
   arguments:
     parameters:
       - name: backup-id
-        value: xxx # 这里填写需要恢复的备份ID，可以通过 showsnapshots 工作流查看 
+        value: xxx #!这里填写需要恢复的备份ID，可以通过 showsnapshots 工作流查看 
   templates:
   - name: restore
     steps:                              

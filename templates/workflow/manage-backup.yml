@@ -12,6 +12,9 @@ metadata:
 spec:
   serviceAccountName: backup-sa
   entrypoint: backup
+  podGC:
+    strategy: OnWorkflowSuccess
+    deleteDelayDuration: 3600s
   volumes:
     - name: backup-repo
       persistentVolumeClaim:
