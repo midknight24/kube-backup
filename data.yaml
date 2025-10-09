@@ -9,6 +9,9 @@ repoPvc:
   name: autoquiz-backup-pvc
 
 # 需要暂停和恢复的工作负载
+# 每个子列表内的工作负载会并行暂停和恢复，子列表间会顺序执行
+# 例如，下面的配置会先暂停 statefulset/autoquiz-mysql，
+# 然后再并行暂停 deployment/autoquiz-pub、deployment/autoquiz-quiz 和 deployment/autoquiz-user
 workloads:
   - - name: statefulset/autoquiz-mysql
       replica: 1
