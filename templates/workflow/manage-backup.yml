@@ -26,15 +26,17 @@ spec:
     #@ end
   templates:
   - name: backup
-    steps:                              
-      - - name: pause-resources
+    steps:
+      #@ for i, workload in enumerate(data.values.workloads):                              
+      - - name: pause-resources-(@= str(i) @)
           templateRef:                  
             name: pause-workflow-template 
             template: pause-resources
           arguments:
             parameters:
               - name: resources
-                value: #@ json.encode([{"name": r.name, "timeout": getattr(r, 'timeout', '60s') } for r in data.values.workloads])
+                value: #@ json.encode([{"name": r.name, "timeout": getattr(r, 'timeout', '60s') } for r in workload])
+      #@ end
       - - name: backup-(@= data.values.backupPvcs[0].name @)
           templateRef:                  
             name: backup-(@= data.values.backupPvcs[0].name @)-workflow-template
@@ -53,11 +55,13 @@ spec:
               - name: backup-id
                 value: "{{workflow.creationTimestamp}}"
         #@ end
-      - - name: resume-resources
+      #@ for i, workload in enumerate(data.values.workloads):
+      - - name: resume-resources-(@= str(i) @)
           templateRef:                  
             name: resume-workflow-template
             template: resume-resources
           arguments:
             parameters:
               - name: resources
-                value: #@ json.encode([{"name": r.name, "replica": r.replica} for r in data.values.workloads])
+                value: #@ json.encode([{"name": r.name, "replica": r.replica} for r in workload])
+      #@ end

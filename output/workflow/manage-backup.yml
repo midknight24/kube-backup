@@ -22,14 +22,22 @@ spec:
   templates:
   - name: backup
     steps:
-    - - name: pause-resources
+    - - name: pause-resources-0
         templateRef:
           name: pause-workflow-template
           template: pause-resources
         arguments:
           parameters:
           - name: resources
-            value: '[{"name":"deployment/autoquiz-pub","timeout":"120s"},{"name":"deployment/autoquiz-quiz","timeout":"60s"},{"name":"deployment/autoquiz-user","timeout":"60s"},{"name":"statefulset/autoquiz-mysql","timeout":"60s"}]'
+            value: '[{"name":"statefulset/autoquiz-mysql","timeout":"60s"}]'
+    - - name: pause-resources-1
+        templateRef:
+          name: pause-workflow-template
+          template: pause-resources
+        arguments:
+          parameters:
+          - name: resources
+            value: '[{"name":"deployment/autoquiz-pub","timeout":"120s"},{"name":"deployment/autoquiz-quiz","timeout":"60s"},{"name":"deployment/autoquiz-user","timeout":"60s"}]'
     - - name: backup-autoquiz-mysql-pvc
         templateRef:
           name: backup-autoquiz-mysql-pvc-workflow-template
@@ -46,11 +54,19 @@ spec:
           parameters:
           - name: backup-id
             value: '{{workflow.creationTimestamp}}'
-    - - name: resume-resources
+    - - name: resume-resources-0
         templateRef:
           name: resume-workflow-template
           template: resume-resources
         arguments:
           parameters:
           - name: resources
-            value: '[{"name":"deployment/autoquiz-pub","replica":3},{"name":"deployment/autoquiz-quiz","replica":3},{"name":"deployment/autoquiz-user","replica":1},{"name":"statefulset/autoquiz-mysql","replica":1}]'
+            value: '[{"name":"statefulset/autoquiz-mysql","replica":1}]'
+    - - name: resume-resources-1
+        templateRef:
+          name: resume-workflow-template
+          template: resume-resources
+        arguments:
+          parameters:
+          - name: resources
+            value: '[{"name":"deployment/autoquiz-pub","replica":3},{"name":"deployment/autoquiz-quiz","replica":3},{"name":"deployment/autoquiz-user","replica":1}]'
