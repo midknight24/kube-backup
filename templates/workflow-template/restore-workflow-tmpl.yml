@@ -8,6 +8,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: restore-(@= pvc.name @)-workflow-template
+  namespace: (@= data.values.namespace @)
 spec:
   entrypoint: restore-resource
   templates:

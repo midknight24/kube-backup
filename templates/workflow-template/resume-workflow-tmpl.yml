@@ -1,7 +1,13 @@
+#@ load("@ytt:data", "data")
+#@yaml/text-templated-strings
+
+---
+
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: resume-workflow-template 
+  namespace: (@= data.values.namespace @)
 spec:
   entrypoint: resume-resources
   templates:
