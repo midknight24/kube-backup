@@ -23,7 +23,7 @@ spec:
                 - name: resource
                   value: "{{item.name}}"
                 - name: timeout
-                  value: "{{item.timeout | default('60s')}}"
+                  value: "{{item.timeout}}"
             withParam: "{{inputs.parameters.resources}}"
     - name: pause-resource
       inputs:
