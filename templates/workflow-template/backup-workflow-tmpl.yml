@@ -29,6 +29,7 @@ spec:
           set -e
           export RESTIC_REPOSITORY=/(@= pvc.name @)/backup
           export RESTIC_PASSWORD=abcd1234
+          restic unlock || true
           restic init || true
           restic backup --host (@= pvc.name @) --tag {{inputs.parameters.backup-id}} /source/(@= pvc.name @)
           restic snapshots
